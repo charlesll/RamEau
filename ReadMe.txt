@@ -27,6 +27,8 @@ Installation instruction:
 
 f2py -c -m gcvspl gcvspl.f
 
+4) WARNING: in the Rameau.py line 31, change the path in sys.path.append("/Users/charleslelosq/Documents/RamEau/gcvspl/")... Obviously it should point to the path of ./RamEau/gcvspl/ in your system, not mine...
+
 4) launch the Rameau.py script... should work out of the box now
 
 ###########
