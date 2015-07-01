@@ -106,8 +106,8 @@ for i in range(len(BIRS)): # We loop over in dataliste
     asili = np.trapz(silicate[:,3],silicate[:,0])
     aeau = np.trapz(eau[:,3],eau[:,0])
     
-    eseairesili = 1/np.sqrt(asili) # relative areeas
-    eseaireeau = 1/np.sqrt(aeau) # relative areas
+    eseairesili = 1/np.sqrt(asili)*asili # relative areeas
+    eseaireeau = 1/np.sqrt(aeau)*aeau # relative areas
 
     Rws_H2O[i,1] = aeau/asili
     Rws_H2O[i,2] = np.sqrt(((1/asili)**2*eseaireeau**2)+((-1/asili**2)**2*eseairesili**2))
