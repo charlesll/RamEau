@@ -5,7 +5,7 @@ Created on Wed August 1 17:52 2014
 @author: Charles Le Losq
 Geophysical Laboratory, Carnegie Institution for Science
 clelosq@carnegiescience.edu
-lelosq@ipgp.fr
+charles.lelosq@gmail.com
 
 This software is a translation of the pascal routine RAMEAU, associated to 
 the publication 
@@ -28,7 +28,10 @@ distribution, which is free, and which is perfect for scientific python.
 
 # Import of wrapper for gcvspl.f, wrapper in gcvspl.so and in py function gcvspline.py
 import sys
-sys.path.append("/Users/charleslelosq/Documents/RamEau/gcvspl/")
+import os
+print("The current working directory is: "+os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.dirname(os.path.abspath(__file__))+"/gcvspl/")
+
 import gcvspline
 
 # Import of libraries
@@ -41,24 +44,11 @@ import matplotlib
 import matplotlib.gridspec as gridspec
 from pylab import *
 from ast import literal_eval
-
-from Tkinter import *
-import tkMessageBox
-from tkFileDialog import askopenfilename
-from tkFileDialog import asksaveasfile
      
 #### First thing: we collect the list of spectra
 
-# Collecting the sample spectrum
-tkMessageBox.showinfo(
-            "Open ",
-            "Please open the list of spectra")
-
-Tk().withdraw() # we don't want a full GUI, so keep the root window from appearing
-samplename = askopenfilename() # show an "Open" dialog box and return the path to the selected file
-
 # we import the information in an array, skipping the first line
-dataliste = np.genfromtxt(samplename,dtype = 'string', skip_header=1,skip_footer=0)
+dataliste = np.genfromtxt('./data/dataliste_baseline.txt',dtype = 'string', skip_header=1,skip_footer=0)
 
 paths = (dataliste[:,0])
 sampletype = dataliste[:,1]
@@ -69,8 +59,18 @@ BIRS = dataliste[:,4]
 Rws_H2O = np.zeros((len(BIRS),3)) # In this array we will output the water concentration (if provided), the Rws and its associated error
 Rws_H2O[:,0] = H2O
 
+print("\nDataliste successfully imported. ")
 for i in range(len(BIRS)): # We loop over in dataliste
-    sample = np.genfromtxt('./dat0/'+paths[i]+'.xy') # we assume here that data are in ./dat0. Use alias or change that
+    
+    print("\nNow Fitting the spline under the file "+paths[i])
+    
+    #we import the file    
+    sample = np.genfromtxt('./data/longcorr/'+paths[i]) # we assume here that data are in ./dat0. Use alias or change that
+    
+    #Checking if their is nan values somewhere, and putting them to 0
+    if np.isnan(sample).any():
+        print("\nWarning you have nan values in the file "+paths[i]+'. We put them to 0. Check that it is fine in the output')
+        sample = np.nan_to_num(sample)
     
     bir = literal_eval(BIRS[i]) # the BIRs
     samplecorr = np.zeros((len(sample[:,0]),5))
@@ -87,7 +87,7 @@ for i in range(len(BIRS)): # We loop over in dataliste
     ydata = np.zeros((len(xdata),1))
     ydata[:,0] = yafit[:,1]
     #ese = yafit[:,2]
-    ese = sqrt(yafit[:,1])
+    ese = np.sqrt(np.abs(yafit[:,1]))
     f = np.fromstring(splinefactor[i], dtype = float, sep = ' ')
     VAL = ese**2    
     
@@ -110,7 +110,7 @@ for i in range(len(BIRS)): # We loop over in dataliste
     eseaireeau = 1/np.sqrt(aeau) # relative areas
 
     Rws_H2O[i,1] = aeau/asili
-    Rws_H2O[i,2] = eseairesili/asili + eseaireeau/aeau
+    Rws_H2O[i,2] = np.sqrt(((1/asili)**2*eseaireeau**2)+((-1/asili**2)**2*eseairesili**2))
 
     # we normalize the spectra a little bit differently from 2012: total area = 100
 
@@ -126,9 +126,10 @@ for i in range(len(BIRS)): # We loop over in dataliste
     ax2.plot(samplecorr[:,0],samplecorr[:,3],'r-')
     ax1.set_title(paths[i])
 
-    np.savetxt(('./corrspectra/'+paths[i]+'.txt'),samplecorr)
+    np.savetxt(('./corrspectra/'+paths[i]),samplecorr)
     savefig(('./plots/'+paths[i]+'.pdf'))    
-    
+
+print("Done. Generating the general output in output.txt, as well as a pdf figure")
 ### General output of dtat
 np.savetxt(('output.txt'),Rws_H2O)
 figure()
